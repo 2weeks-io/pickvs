@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="com.quiz.mapper.userMapper">
+
+ 	<select id="insertUser" parameterType="userDto">
+		INSERT INTO USER(USER_ID, NICKNAME, PWD, REG_DIV_CD, REGPE_ID, REG_DTS, MOD_DTS) VALUES(#{user_id}, #{nickname}, #{pwd}, #{reg_div_cd}, #{user_id}, now(), now())
+    </select>
+    
+    <select id="getNickname" resultType="String">
+    	SELECT  NICKNAME
+		FROM    NICKNAME
+		WHERE   1 = 1
+		AND     USE_YN = 'N'
+		ORDER BY RAND() LIMIT 1
+    </select>    
+    
+    <select id="chekUserId" parameterType="userDto" resultType="int">
+    	SELECT COUNT(USER_ID)
+		FROM   USER
+		WHERE  1 = 1
+		AND    USER_ID = #{user_id}
+    </select>
+    
+    <select id="updateNickname" parameterType="String">
+    	UPDATE NICKNAME
+    	SET    USE_YN = 'Y'
+    	WHERE  1 = 1
+    	AND    NICKNAME = #{nickname}
+    </select>
+    
+    <select id="chekOurUser" parameterType="loginCommand" resultType="boolean">
+			SELECT CASE WHEN EXISTS(
+			   					 	   SELECT *
+			   						   FROM   USER
+			   						   WHERE  1 = 1
+			   						   AND    USER_ID = #{user_id}
+			   						   AND    PWD     = #{pwd}
+								   ) 
+		               THEN TRUE
+				       ELSE FALSE 
+				  END
+    </select>
+    
+ 	<select id="insertNickname" parameterType="String">
+ 		/* com.quiz.mapper.userMapper.insertNickname */
+		INSERT INTO NICKNAME VALUES(#{nickname}, 'Y')
+    </select>
+    
+    <select id="chekNickname" parameterType="String" resultType="boolean">
+    	SELECT CASE WHEN EXISTS (
+    								SELECT *
+    								FROM   NICKNAME
+    								WHERE  1 = 1
+    								AND    NICKNAME = #{nickname}
+    	                        )
+    	           THEN TRUE
+    	           ELSE FALSE
+    	       END
+    </select>
+    
+    <select id="keepLogin" parameterType="authInfo">
+    	/* com.quiz.mapper.userMapper.keepLogin */
+    	UPDATE  USER
+    	SET     SESSION_KEY   = #{session_id}
+    	      , SESSION_LIMIT = #{session_limit}
+    	WHERE   USER_ID       = #{user_id} 
+    </select>
+    
+    <select id="checkLoginBefore" resultType="userDto">
+    	SELECT  USER_ID
+    	      , NICKNAME
+    	      , REG_DIV_CD
+    	      , REGPE_ID
+    	FROM    USER
+    	WHERE   SESSION_KEY = #{session_id}
+    </select>
+    
+    <select id="getUserDto" resultType="userDto">
+    	SELECT  USER_ID
+    	      , NICKNAME
+    	      , REG_DIV_CD
+    	      , REGPE_ID
+    	FROM    USER
+    	WHERE   1 = 1
+    	AND     USER_ID = #{user_id}
+    </select>
+    
+</mapper>
