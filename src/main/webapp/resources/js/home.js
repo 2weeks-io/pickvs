@@ -58,7 +58,10 @@ function setLoginIcon(login) {
 	$('.lock').toggle(!login);
 }
 
-function requestLogin(sendData) {
+function requestLogin(sendData, loginInpGroup) {
+	var loginForm = $('#login');
+	var loginFootBtn = loginForm.find('.modal_footbtn');
+
 	oAjax.sendRequest(URL_CREATE_SESSION, sendData, null, 'POST', null).then(json => {
 		if (json.login) {
 			oToast.show(json.nickname + '님 환영합니다');
@@ -90,10 +93,11 @@ function createMember(data) {
 			var pwd = joinInpGroup.eq(2).val();
 			var rememberId = undefined;
 			var data = { user_id, pwd, rememberId };
-			requestLogin(data);
-			$('#join .modal_inp')
-				.removeClass('on')
-				.val('');
+			var loginInpGroup = $('#join .modal_inp');
+
+			requestLogin(data, loginInpGroup);
+
+			loginInpGroup.removeClass('on').val('');
 			$('#join .modal_footbtn')
 				.prop('disabled', true)
 				.text('필수 항목을 작성해주세요')
@@ -122,11 +126,14 @@ $('#_join_form').on('submit', function(e) {
 
 $('#_login_form').on('submit', function(e) {
 	e.preventDefault();
+	var loginForm = $('#login');
+	var loginInpGroup = loginForm.find($('.modal_inp'));
 	var user_id = loginInpGroup.eq(0).val();
 	var pwd = loginInpGroup.eq(1).val();
 	var rememberId = loginForm.find('input[type="checkbox"]').prop('checked');
 	var data = { user_id, pwd, rememberId };
-	requestLogin(data);
+
+	requestLogin(data, loginInpGroup);
 });
 
 $('.home_header_navlist').on('click', function() {
@@ -262,8 +269,6 @@ ssj.view.modal = function(options) {
 	this.init();
 };
 
-ssj.view.modal.prototype = $.extend({}, $.observer);
-
 ssj.view.modal.join = function(options) {
 	const df = {};
 	$.extend(this, options, df);
@@ -291,20 +296,20 @@ ssj.view.modal.join.prototype = $.extend(
 			const $input = $(e.target);
 			this._toggleClass($input);
 			this._validatePassWord($input);
-			this._toggleBtnFoot(this.isCompleteForm());
+			this._toggleBtnFoot(isCompleteForm(this.$inpGroup));
 		},
 		_toggleClass($input) {
 			const bEmpty = $input.val().length === 0;
 			$input.toggleClass('on', !bEmpty).removeClass('wrong');
 		},
-		_togglePwdClass(isSame) {
-			this.$inpPwdGroup.toggleClass('on', isSame);
-			this.$inpPwdGroup.toggleClass('wrong', !isSame);
-		},
 		_toggleBtnFoot(bCompleted) {
 			this.$btnFoot.toggleClass('on', bCompleted).prop('disabled', !bCompleted);
 
 			bCompleted ? this.$btnFoot.text('회원가입') : this.$btnFoot.text('필수 항목을 작성해주세요');
+		},
+		_togglePwdClass(isSame) {
+			this.$inpPwdGroup.toggleClass('on', isSame);
+			this.$inpPwdGroup.toggleClass('wrong', !isSame);
 		},
 		_validatePassWord($input) {
 			if (!this.isAllInputed()) return;
@@ -320,13 +325,6 @@ ssj.view.modal.join.prototype = $.extend(
 		},
 		isSame($my, $other) {
 			return $my.val() === $other.val();
-		},
-		isCompleteForm() {
-			let result = true;
-			this.$inpGroup.each((index, item) => {
-				if (!$(item).hasClass('on')) result = false;
-			});
-			return result;
 		}
 	},
 	$.observer
@@ -336,11 +334,12 @@ ssj.view.modal.prototype = $.extend({}, $.observer);
 
 var oJoinModal = new ssj.view.modal.join();
 
-var loginForm = $('#login');
-var loginInpGroup = loginForm.find('.modal_inp');
-var loginFootBtn = loginForm.find('.modal_footbtn');
-loginInpGroup.on('keyup', function(e) {
-	if (isCompleteForm(loginInpGroup)) {
+$('#login').on('keyup', '.modal_inp', function(e) {
+	var loginFootBtn = $(e.delegateTarget).find('.modal_footbtn');
+
+	$(e.currentTarget).toggleClass('on', $(e.currentTarget).val().length > 0);
+
+	if (isCompleteForm($(e.delegateTarget).find('.modal_inp'))) {
 		loginFootBtn
 			.addClass('on')
 			.prop('disabled', false)
@@ -355,6 +354,13 @@ loginInpGroup.on('keyup', function(e) {
 
 var oSsjViewInfinite;
 $(function() {
+	window.isCompleteForm = function($inpGroup) {
+		let result = true;
+		$inpGroup.each((index, item) => {
+			if (!$(item).hasClass('on')) result = false;
+		});
+		return result;
+	};
 	$('a[rel*=leanModal]').leanModal({ overlay: 0.4, slideinUp: 'join', topfix: ['#_searchbar', '#_write'] }); //a태그에 모달 켜기 기능 추가
 	//$("#login_trigger").click();
 	//인피니티 스크롤 위치 기억
