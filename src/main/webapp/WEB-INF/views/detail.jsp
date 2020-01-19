@@ -50,7 +50,7 @@
     </div>
       <!-- 대댓글메뉴버튼 -->
       <div class="modal ty2" id="_system_modal" style="display:none;top:55vh;">
-        <input type="hidden" class="comment_no">
+        <input type="hidden" class="comment_id">
         <div class="modal_ctn">
           <div class="modal_cont">
               <button type="button" class="modal_btn write">대댓글 작성</button>
